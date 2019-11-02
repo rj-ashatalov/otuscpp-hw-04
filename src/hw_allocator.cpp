@@ -1,3 +1,5 @@
+#include <cstddef>
+
 struct NoCopyable
 {
     NoCopyable() = default;
@@ -16,7 +18,21 @@ struct hard : public NoCopyable
     };
 };
 
+template <class T>
 struct HwAllocator
 {
+    T* allocate(std::size_t n);
+    {
+        aut op = std::malloc(n *sizeof(T));
+        if (!p)
+        {
+            throw std::bad_alloc();
+        }
+        return reinterpret_cast<T *> (p);
+    };
 
+    void deallocate(T* p, std::size_t n);
+    {
+        std::free(p);
+    };
 };
