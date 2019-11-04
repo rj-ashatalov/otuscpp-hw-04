@@ -32,7 +32,7 @@ struct Hard : public NoCopyable
 template <class T>
 struct SimpleAllocator
 {
-    typedef T value_type;
+    using value_type = T;
 
     SimpleAllocator() = default;
 
@@ -68,7 +68,12 @@ bool operator!=(const SimpleAllocator<T>&, const SimpleAllocator<U>&) { return !
 template <class T, size_t N>
 struct HwAllocator
 {
-    typedef T value_type;
+    using value_type = T;
+
+    template<typename U>
+    struct rebind {
+        using other = HwAllocator<U, N>;
+    };
 
     HwAllocator() = default;
 
