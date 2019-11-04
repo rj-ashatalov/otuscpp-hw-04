@@ -19,7 +19,7 @@ int main(int, char const *[])
 
     {
         std::cout << "\n-- Map with homework allocator -- " << std::endl;
-        auto m2 = std::map<int, int, std::less<int>, HwAllocator<std::pair<const int, int>, 4>>{};
+        auto m2 = std::map<int, int, std::less<int>, HwAllocator<std::pair<const int, int>, 5>>{};
         for (size_t i = 0; i < 5; ++i) {
             m2.emplace(i, i);
             std::cout << "---" << std::endl;

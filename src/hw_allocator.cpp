@@ -18,7 +18,7 @@ struct Hard : public NoCopyable
             : fa(fa)
             , fi(fi)
     {
-        //emply
+        //empty
     };
 
     Hard(Hard&& other) noexcept
@@ -86,15 +86,12 @@ struct HwAllocator
 
         if (n > _allocRemain)
         {
-            auto p = reserve(N + _size);
+            auto p = reserve(N);
             for (auto i = 0u; i < (_size - _allocRemain); ++i)
             {
-//                std::swap(*(p+i), *(_mempool+i));
-//                new(p+i) T(std::forward<T>(*(_mempool + i)));
-                auto&& tmp = *(_mempool + i);
                 *(p + i) = std::move(*(_mempool + i));
             }
-            _lastPointer = p + _size - _allocRemain - 1;
+            _lastPointer = p + _size - _allocRemain;
             _allocRemain = N;
             _mempool = p;
             _size += N;
@@ -106,10 +103,14 @@ struct HwAllocator
         return currentPointer;
     }
 
-    void deallocate(T* p, std::size_t) noexcept
+    void deallocate(T*, std::size_t) noexcept
     {
         std::cout << __PRETTY_FUNCTION__ << std::endl;
-        std::free(p);
+        if(_mempool != nullptr)
+        {
+            std::free(_mempool);
+            _mempool = nullptr;
+        }
     }
 
     private:
@@ -127,7 +128,6 @@ struct HwAllocator
             throw std::bad_alloc();
         }
 
-
         size_t _size = 0u;
         size_t _allocRemain = 0u;
         T * _mempool = nullptr;
@@ -137,43 +137,3 @@ template <class T, size_t N, class U, size_t M>
 bool operator==(const HwAllocator<T, N>&, const HwAllocator<U, M>&) { return (N == M) && std::is_same_v<T,U>; }
 template <class T, size_t N, class U, size_t M>
 bool operator!=(const HwAllocator<T, N>&, const HwAllocator<U, M>&) { return (N != M) || !std::is_same_v<T,U>; }
-
-/*
-template <class T, size_t N>
-struct HwAllocator
-{
-    using value_type = T;
-
-    T* allocate(std::size_t n)
-    {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-        if (n > _allocRemain)
-        {
-            auto p = std::malloc(N * sizeof(T));
-            if (!p)
-            {
-                throw std::bad_alloc();
-            }
-            _allocRemain = N;
-            //todo перераспределить элементы
-            return reinterpret_cast<T *> (p);
-        }
-        else
-        {
-            _allocRemain -= n;
-            auto currentPointer = _lastPointer;
-            _lastPointer += n;
-            return currentPointer;
-        }
-    };
-
-    void deallocate(T* p, std::size_t n)
-    {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-        std::free(p);
-    };
-
-    private:
-        size_t _allocRemain = 0u;
-        T * _lastPointer = nullptr;
-};*/
