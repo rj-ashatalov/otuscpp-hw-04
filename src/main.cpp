@@ -2,9 +2,11 @@
 #include <map>
 #include "hw_allocator.cpp"
 
-int Fibonachi(size_t value)
+int Fibonacci(const size_t N)
 {
-    return static_cast<int>(value);
+    if (N <= 2)
+        return 1; // первые 2 числа равны 1
+    return static_cast<int>(Fibonacci(N - 1) + Fibonacci(N - 2));
 }
 
 int Factorial(size_t value)
@@ -17,6 +19,8 @@ int Factorial(size_t value)
         res *= value--;
     }
     return res;
+
+
 }
 
 int main(int, char const *[])
@@ -51,7 +55,7 @@ int main(int, char const *[])
         std::cout << "\n-- Map with homework allocator and container -- " << std::endl;
         auto m = std::map<int, Hard, std::less<int>, HwAllocator<std::pair<const int, Hard>, 10>>{};
         for (size_t i = 0; i < 11; ++i) {
-            m.emplace(i, Hard{Factorial(i), Fibonachi(i)});
+            m.emplace(i, Hard{Factorial(i), Fibonacci(i)});
             std::cout << "---" << std::endl;
         }
         for (auto&& [key, value]: m) {
