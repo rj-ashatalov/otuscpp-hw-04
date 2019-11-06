@@ -55,7 +55,9 @@ int main(int, char const *[])
         std::cout << "\n-- Map with homework allocator and container -- " << std::endl;
         auto m = std::map<int, Hard, std::less<int>, HwAllocator<std::pair<const int, Hard>, 10>>{};
         for (size_t i = 0; i < 11; ++i) {
-            m.emplace(i, Hard{Factorial(i), Fibonacci(i)});
+            m.emplace(std::piecewise_construct,
+                      std::forward_as_tuple(i),
+                      std::forward_as_tuple(Factorial(i), Fibonacci(i)));
             std::cout << "---" << std::endl;
         }
         for (auto&& [key, value]: m) {
