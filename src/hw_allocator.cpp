@@ -2,12 +2,16 @@
 #include <new>
 #include <iostream>
 #include <limits>
+#include <vector>
 
 struct NoCopyable
 {
     NoCopyable() = default;
     NoCopyable(const NoCopyable& other) = delete;
-    virtual ~NoCopyable() = default;
+    virtual ~NoCopyable()
+    {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+    };
 };
 
 struct Hard : public NoCopyable
@@ -18,7 +22,7 @@ struct Hard : public NoCopyable
             : fa(fa)
             , fi(fi)
     {
-        //empty
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
     };
 
     Hard(Hard&& other) noexcept
@@ -58,22 +62,11 @@ struct SimpleAllocator
         std::cout << __PRETTY_FUNCTION__ << std::endl;
         std::free(p);
     }
-
-    /*template<typename U, typename ...Args>
-    void construct(U *p, Args &&...args) const {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-        new(p) U(std::forward<Args>(args)...);
-    };
-
-    void destroy(T *p) const {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-        p->~T();
-    }*/
 };
 template <class T, class U>
-bool operator==(const SimpleAllocator<T>&, const SimpleAllocator<U>&) { return std::is_same_v<T,U>; }
+bool operator==(const SimpleAllocator<T>&, const SimpleAllocator<U>&) { return std::is_same<T,U>::value; }
 template <class T, class U>
-bool operator!=(const SimpleAllocator<T>&, const SimpleAllocator<U>&) { return !std::is_same_v<T,U>; }
+bool operator!=(const SimpleAllocator<T>&, const SimpleAllocator<U>&) { return !std::is_same<T,U>::value; }
 
 
 template <class T, size_t N>
@@ -95,27 +88,24 @@ struct HwAllocator
     {
         std::cout << __PRETTY_FUNCTION__ << std::endl;
 
-        if (_mempool == nullptr)
+        if (n > _capacityRemain)
         {
             _lastPointer = reserve(N);
-            _mempool = _lastPointer;
-        }
-
-        if (_size >= N)
-        {
-            throw std::bad_alloc();
+            _mempool.emplace_back(_lastPointer);
+            _capacityRemain = N;
         }
 
         _size += n;
+        _capacityRemain -= n;
         auto currentPointer = _lastPointer;
         _lastPointer += n;
         return currentPointer;
     }
 
-    void deallocate(T* p, std::size_t) noexcept
+    void deallocate(T*, std::size_t) noexcept
     {
         std::cout << __PRETTY_FUNCTION__ << std::endl;
-        if (_mempool == nullptr)
+        if (_mempool.size() <= 0)
         {
             return;
         }
@@ -123,14 +113,29 @@ struct HwAllocator
         if(_size <= 0)
         {
             std::cout << "Free all memory" << std::endl;
-            std::free(_mempool);
-            _mempool = nullptr;
+            for (auto &&chunk : _mempool)
+            {
+                std::free(chunk);
+            }
+            _mempool.clear();
         }
     }
 
+    /*template<typename U, typename ...Args>
+    void construct(U *p, Args &&...args) const {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        new(p) U(std::forward<Args>(args)...);
+    };
+
+    void destroy(T *p) const {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        p->~T();
+    }*/
+
     private:
         size_t _size = 0u;
-        T * _mempool = nullptr;
+        size_t _capacityRemain = 0u;
+        std::vector<T*> _mempool;
         T * _lastPointer = nullptr;
 
         T* reserve(std::size_t n)
@@ -148,6 +153,6 @@ struct HwAllocator
         }
 };
 template <class T, size_t N, class U, size_t M>
-bool operator==(const HwAllocator<T, N>&, const HwAllocator<U, M>&) { return (N == M) && std::is_same_v<T,U>; }
+bool operator==(const HwAllocator<T, N>&, const HwAllocator<U, M>&) { return (N == M) && std::is_same<T,U>::value; }
 template <class T, size_t N, class U, size_t M>
-bool operator!=(const HwAllocator<T, N>&, const HwAllocator<U, M>&) { return (N != M) || !std::is_same_v<T,U>; }
+bool operator!=(const HwAllocator<T, N>&, const HwAllocator<U, M>&) { return (N != M) || !std::is_same<T,U>::value; }

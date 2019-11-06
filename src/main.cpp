@@ -50,7 +50,7 @@ int main(int, char const *[])
     {
         std::cout << "\n-- Map with homework allocator and container -- " << std::endl;
         auto m = std::map<int, Hard, std::less<int>, HwAllocator<std::pair<const int, Hard>, 10>>{};
-        for (size_t i = 0; i < 10; ++i) {
+        for (size_t i = 0; i < 11; ++i) {
             m.emplace(i, Hard{Factorial(i), Fibonachi(i)});
             std::cout << "---" << std::endl;
         }
