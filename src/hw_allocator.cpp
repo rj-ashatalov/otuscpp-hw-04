@@ -14,7 +14,7 @@ struct Hard : public NoCopyable
 {
     int fa;
     int fi;
-    Hard(int fa,int fi)
+    Hard(int fa, int fi)
             : fa(fa)
             , fi(fi)
     {
@@ -58,6 +58,17 @@ struct SimpleAllocator
         std::cout << __PRETTY_FUNCTION__ << std::endl;
         std::free(p);
     }
+
+    /*template<typename U, typename ...Args>
+    void construct(U *p, Args &&...args) const {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        new(p) U(std::forward<Args>(args)...);
+    };
+
+    void destroy(T *p) const {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        p->~T();
+    }*/
 };
 template <class T, class U>
 bool operator==(const SimpleAllocator<T>&, const SimpleAllocator<U>&) { return std::is_same_v<T,U>; }

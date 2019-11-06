@@ -2,9 +2,26 @@
 #include <map>
 #include "hw_allocator.cpp"
 
+int Fibonachi(size_t value)
+{
+    return static_cast<int>(value);
+}
+
+int Factorial(size_t value)
+{
+    if (value == 0) {
+        return 0;
+    }
+    int res = 1;
+    while (value > 0) {
+        res *= value--;
+    }
+    return res;
+}
 
 int main(int, char const *[])
 {
+    if(false)
     {
         std::cout << "-- Map with simple allocator -- " << std::endl;
         auto m = std::map<int, int, std::less<int>, SimpleAllocator<std::pair<const int, int>>>{};
@@ -17,6 +34,7 @@ int main(int, char const *[])
         }
     }
 
+    if(false)
     {
         std::cout << "\n-- Map with homework allocator -- " << std::endl;
         auto m2 = std::map<int, int, std::less<int>, HwAllocator<std::pair<const int, int>, 5>>{};
@@ -26,6 +44,18 @@ int main(int, char const *[])
         }
         for (auto[key, value]: m2) {
             std::cout << key << " " << value << std::endl;
+        }
+    }
+
+    {
+        std::cout << "\n-- Map with homework allocator and container -- " << std::endl;
+        auto m = std::map<int, Hard, std::less<int>, HwAllocator<std::pair<const int, Hard>, 10>>{};
+        for (size_t i = 0; i < 10; ++i) {
+            m.emplace(i, Hard{Factorial(i), Fibonachi(i)});
+            std::cout << "---" << std::endl;
+        }
+        for (auto&& [key, value]: m) {
+            std::cout << key << " " << value.fa << " " << value.fi   << std::endl;
         }
     }
 
