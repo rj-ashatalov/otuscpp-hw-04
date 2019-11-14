@@ -90,9 +90,15 @@ struct HwAllocator
 
         if (n > _capacityRemain)
         {
-            _lastPointer = reserve(N);
+            auto reserveCapacity =  N;
+            if (n > reserveCapacity)
+            {
+                reserveCapacity = n;
+            }
+
+            _lastPointer = reserve(reserveCapacity);
             _mempool.emplace_back(_lastPointer);
-            _capacityRemain = N;
+            _capacityRemain = reserveCapacity;
         }
 
         _size += n;

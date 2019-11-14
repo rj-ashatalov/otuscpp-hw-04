@@ -7,12 +7,43 @@ class HwList
     public:
         using value_type = T;
         using size_type  = std::size_t;
-//        typedef value_type& reference;
+        using allocator_type  = Alloc;
+        typedef value_type& reference;
+        typedef value_type* pointer;
 //        typedef const value_type& const_reference;
 
-        Alloc _alloc;
+        allocator_type _alloc;
         size_type _size;
         T* _begin;
+
+        struct Iterator: public std::iterator< std::input_iterator_tag   // iterator_category
+                                                ,value_type               // value_type
+                                                ,size_type                // difference_type
+                                                ,pointer               // pointer
+                                                ,reference                       // reference
+                                                >
+        {
+            const HwList& _self;
+
+            explicit Iterator(const HwList& self)
+                : _self(self) {}
+
+            Iterator& operator++()
+            {
+                num = TO >= FROM ? num + 1: num - 1;
+                return *this;
+            }
+            Iterator operator++(int)
+            {
+                iterator retval = *this;
+                ++(*this);
+                return retval;
+            }
+
+            bool operator==(Iterator other) const {return num == other.num;}
+            bool operator!=(Iterator other) const {return !(*this == other);}
+            reference operator*() const {return num;}
+        };
 
         HwList()
         {
@@ -42,15 +73,15 @@ class HwList
             ++_size;
         }
 
-        constexpr const value_type* begin() noexcept
+        constexpr const auto begin() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return _begin;
+            return Iterator{*this};
         }
 
-        constexpr const value_type* end() noexcept
+        constexpr const auto end() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return _begin + _size;
+            return begin() + _size;
         }
 };

@@ -39,7 +39,7 @@ int main(int, char const *[])
 
     if(false)
     {
-//        std::vector
+        std::vector
 
         std::cout << "\n-- Map with homework allocator -- " << std::endl;
         auto m2 = std::map<int, int, std::less<int>, HwAllocator<std::pair<const int, int>, 5>>{};
