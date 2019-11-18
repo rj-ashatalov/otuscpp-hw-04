@@ -108,14 +108,14 @@ struct HwAllocator
         return currentPointer;
     }
 
-    void deallocate(T*, std::size_t) noexcept
+    void deallocate(T*, std::size_t n) noexcept
     {
         std::cout << __PRETTY_FUNCTION__ << std::endl;
         if (_mempool.size() <= 0)
         {
             return;
         }
-        --_size;
+        _size -= n;
         if(_size <= 0)
         {
             std::cout << "Free all memory" << std::endl;
