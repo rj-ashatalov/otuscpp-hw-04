@@ -1,20 +1,26 @@
 #include <memory>
 #include <iostream>
+#include <vector>
 
 template<class T,  class Alloc = std::allocator<T> >
 class HwList
 {
     public:
         using value_type = T;
-        using size_type  = std::size_t;
+
         using allocator_type  = Alloc;
-        typedef value_type& reference;
-        typedef value_type* pointer;
-//        typedef const value_type& const_reference;
+        using allocator_traits = std::allocator_traits<allocator_type>;
+        using pointer = typename allocator_traits::pointer;
+
+        using size_type  = typename allocator_traits::size_type;
+
+        using reference = value_type&;
+        using const_reference = value_type const&;
 
         allocator_type _alloc;
-        size_type _size;
-        T* _begin;
+
+        using mem_catche = std::vector<pointer>;
+        mem_catche _refList;
 
         struct Iterator: public std::iterator< std::input_iterator_tag   // iterator_category
                                                 ,value_type               // value_type
@@ -23,26 +29,45 @@ class HwList
                                                 ,reference                       // reference
                                                 >
         {
-            const HwList& _self;
+            const mem_catche& _refList;
+            size_t _current = 0u;
 
-            explicit Iterator(const HwList& self)
-                : _self(self) {}
+            explicit Iterator(const mem_catche& refList, size_t index)
+                : _refList(refList)
+                , _current(index) {
+                std::cout << __PRETTY_FUNCTION__ << std::endl;
+            }
 
             Iterator& operator++()
             {
-                num = TO >= FROM ? num + 1: num - 1;
+                ++_current;
                 return *this;
             }
             Iterator operator++(int)
             {
-                iterator retval = *this;
+                Iterator retval = *this;
                 ++(*this);
                 return retval;
             }
 
-            bool operator==(Iterator other) const {return num == other.num;}
-            bool operator!=(Iterator other) const {return !(*this == other);}
-            reference operator*() const {return num;}
+            bool operator==(const Iterator& other) const
+            {
+                return _current == other._current;
+            }
+
+            bool operator!=(const Iterator& other) const
+            {
+                return !(*this == other);
+            }
+
+            reference operator*() const
+            {
+                if (_current < _refList.size())
+                {
+                    return *(_refList[_current]);
+                }
+                return *(_refList[std::max(static_cast<int>(_refList.size()) - 1, 0)] + 1);
+            }
         };
 
         HwList()
@@ -53,11 +78,12 @@ class HwList
         ~HwList()
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            for (size_t i = 0; i < _size; ++i)
+            for (auto ptr : _refList)
             {
-                _begin->~value_type();
+                ptr->~T();
+                _alloc.deallocate(ptr, 1);
             }
-            _alloc.deallocate(_begin, sizeof(value_type)/*probably fake data*/);
+            _refList.clear();
         };
 
         template <class ...Args>
@@ -66,22 +92,18 @@ class HwList
             std::cout << __PRETTY_FUNCTION__ << std::endl;
             const auto item = _alloc.allocate(1);
             new(item) T(std::forward<Args>(args)...);
-            if (_begin == nullptr)
-            {
-                _begin = item;
-            }
-            ++_size;
+            _refList.emplace_back(item);
         }
 
-        constexpr const auto begin() noexcept
+        constexpr Iterator begin() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return Iterator{*this};
+            return Iterator(_refList, 0);
         }
 
-        constexpr const auto end() noexcept
+        constexpr Iterator end() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return begin() + _size;
+            return Iterator(_refList, _refList.size());
         }
 };
