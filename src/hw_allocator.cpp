@@ -91,7 +91,7 @@ struct HwAllocator
         : _size(std::move(other._size))
         , _capacityRemain(std::move(other._capacityRemain))
         , _mempool(std::move(other._mempool))
-        , _lastPointer(std::exchange(other._lastPointer))
+        , _lastPointer(std::move(other._lastPointer))
     {}
 
     template <class U, size_t M>
@@ -107,7 +107,7 @@ struct HwAllocator
         : _size(std::move(other._size))
         , _capacityRemain(std::move(other._capacityRemain))
         , _mempool(std::move(other._mempool))
-        , _lastPointer(std::exchange(other._lastPointer))
+        , _lastPointer(std::move(other._lastPointer))
     {}
 
     [[nodiscard]] T* allocate(std::size_t n)
