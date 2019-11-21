@@ -68,7 +68,6 @@ bool operator==(const SimpleAllocator<T>&, const SimpleAllocator<U>&) { return s
 template <class T, class U>
 bool operator!=(const SimpleAllocator<T>&, const SimpleAllocator<U>&) { return !std::is_same<T,U>::value; }
 
-
 template <class T, size_t N>
 struct HwAllocator
 {
@@ -81,8 +80,35 @@ struct HwAllocator
 
     HwAllocator() = default;
 
-    template <class U>
-    constexpr HwAllocator(const HwAllocator<U, N>&) noexcept {}
+    constexpr HwAllocator(const HwAllocator<T, N>& other) noexcept
+        : _size(other._size)
+        , _capacityRemain(other._capacityRemain)
+        , _mempool(other._mempool)
+        , _lastPointer(other._lastPointer)
+    {}
+
+    constexpr HwAllocator(HwAllocator<T, N>&& other) noexcept
+        : _size(std::exchange(other._size, 0u))
+        , _capacityRemain(std::exchange(other._capacityRemain, 0u))
+        , _mempool(std::move(other._mempool))
+        , _lastPointer(std::exchange(other._lastPointer, nullptr))
+    {}
+
+    template <class U, size_t M>
+    constexpr HwAllocator(const HwAllocator<U, M>& other) noexcept
+        : _size(other._size)
+        , _capacityRemain(other._capacityRemain)
+        , _mempool(other._mempool)
+        , _lastPointer(other._lastPointer)
+    {}
+
+    template <class U, size_t M>
+    constexpr HwAllocator(HwAllocator<U, M>&& other) noexcept
+        : _size(std::exchange(other._size, 0u))
+        , _capacityRemain(std::exchange(other._capacityRemain, 0u))
+        , _mempool(std::move(other._mempool))
+        , _lastPointer(std::exchange(other._lastPointer, nullptr))
+    {}
 
     [[nodiscard]] T* allocate(std::size_t n)
     {

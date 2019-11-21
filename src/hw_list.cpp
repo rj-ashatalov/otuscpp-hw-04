@@ -7,20 +7,13 @@ class HwList
 {
     public:
         using value_type = T;
-
         using allocator_type  = Alloc;
         using allocator_traits = std::allocator_traits<allocator_type>;
         using pointer = typename allocator_traits::pointer;
-
         using size_type  = typename allocator_traits::size_type;
-
         using reference = value_type&;
         using const_reference = value_type const&;
-
-        allocator_type _alloc;
-
         using mem_catche = std::vector<pointer>;
-        mem_catche _refList;
 
         struct Iterator: public std::iterator< std::input_iterator_tag   // iterator_category
                                                 ,value_type               // value_type
@@ -70,6 +63,11 @@ class HwList
             }
         };
 
+    private:
+        allocator_type _alloc;
+        mem_catche _refList;
+
+    public:
         HwList()
         {
             //
