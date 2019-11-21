@@ -88,10 +88,10 @@ struct HwAllocator
     {}
 
     constexpr HwAllocator(HwAllocator<T, N>&& other) noexcept
-        : _size(std::exchange(other._size, 0u))
-        , _capacityRemain(std::exchange(other._capacityRemain, 0u))
+        : _size(std::move(other._size))
+        , _capacityRemain(std::move(other._capacityRemain))
         , _mempool(std::move(other._mempool))
-        , _lastPointer(std::exchange(other._lastPointer, nullptr))
+        , _lastPointer(std::exchange(other._lastPointer))
     {}
 
     template <class U, size_t M>
@@ -104,10 +104,10 @@ struct HwAllocator
 
     template <class U, size_t M>
     constexpr HwAllocator(HwAllocator<U, M>&& other) noexcept
-        : _size(std::exchange(other._size, 0u))
-        , _capacityRemain(std::exchange(other._capacityRemain, 0u))
+        : _size(std::move(other._size))
+        , _capacityRemain(std::move(other._capacityRemain))
         , _mempool(std::move(other._mempool))
-        , _lastPointer(std::exchange(other._lastPointer, nullptr))
+        , _lastPointer(std::exchange(other._lastPointer))
     {}
 
     [[nodiscard]] T* allocate(std::size_t n)
