@@ -153,16 +153,16 @@ struct HwAllocator
         }
     }
 
-//    template<typename U, typename ...Args>
-//    void construct(U *p, Args &&...args) const {
-//        std::cout << __PRETTY_FUNCTION__ << std::endl;
-//        new(p) U(std::forward<Args>(args)...);
-//    };
-//
-//    void destroy(T *p) const {
-//        std::cout << __PRETTY_FUNCTION__ << std::endl;
-//        p->~T();
-//    }
+    template<typename U, typename ...Args>
+    void construct(U *p, Args &&...args) const {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        new(p) U(std::forward<Args>(args)...);
+    };
+
+    void destroy(T *p) const {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        p->~T();
+    }
 
     private:
         size_t _size = 0u;

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-template<class T,  class Alloc = std::allocator<T> >
+template<class T, class Alloc = std::allocator<T> >
 class HwList
 {
     public:
@@ -15,19 +15,20 @@ class HwList
         using const_reference = value_type const&;
         using mem_catche = std::vector<pointer>;
 
-        struct Iterator: public std::iterator< std::input_iterator_tag   // iterator_category
-                                                ,value_type               // value_type
-                                                ,size_type                // difference_type
-                                                ,pointer               // pointer
-                                                ,reference                       // reference
-                                                >
+        struct Iterator: public std::iterator<std::input_iterator_tag   // iterator_category
+                , value_type               // value_type
+                , size_type                // difference_type
+                , pointer               // pointer
+                , reference                       // reference
+        >
         {
             const mem_catche& _refList;
             size_t _current = 0u;
 
             explicit Iterator(const mem_catche& refList, size_t index)
-                : _refList(refList)
-                , _current(index) {
+                    : _refList(refList)
+                    , _current(index)
+            {
                 std::cout << __PRETTY_FUNCTION__ << std::endl;
             }
 
@@ -36,6 +37,7 @@ class HwList
                 ++_current;
                 return *this;
             }
+
             Iterator operator++(int)
             {
                 Iterator retval = *this;
@@ -73,23 +75,41 @@ class HwList
             //
         };
 
+        constexpr HwList(const HwList<T, Alloc>& other) noexcept
+                : _alloc(other._alloc)
+                , _refList(other._refList)
+        {
+        };
+
+        constexpr HwList(HwList<T, Alloc>&& other) noexcept
+                : _alloc(std::move(other._alloc))
+                , _refList(std::move(other._refList))
+        {
+        };
+
+        template<class U, class AllocU>
+        constexpr HwList(const HwList<U, AllocU>& other) = delete;
+
+        template<class U, class AllocU>
+        constexpr HwList(HwList<T, Alloc>&& other) = delete;
+
         ~HwList()
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
             for (auto ptr : _refList)
             {
-                ptr->~T();
+                _alloc.destroy(ptr);
                 _alloc.deallocate(ptr, 1);
             }
             _refList.clear();
         };
 
-        template <class ...Args>
-        void EmplaceBack(Args&&... args)
+        template<class ...Args>
+        void EmplaceBack(Args&& ... args)
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
             const auto item = _alloc.allocate(1);
-            new(item) T(std::forward<Args>(args)...);
+            _alloc.construct(item, std::forward<Args>(args)...);
             _refList.emplace_back(item);
         }
 
