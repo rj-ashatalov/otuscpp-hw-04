@@ -30,6 +30,23 @@ class HwList
             Node* head = nullptr;
             Node* tail = nullptr;
             Node* end = new Node{};
+
+            ForwardList() = default;
+
+            constexpr ForwardList(const ForwardList<U>& other) noexcept
+                    : head(other.head)
+                    , tail(other.tail)
+                    , end(other.end)
+            {
+            };
+
+            constexpr ForwardList(ForwardList<U>&& other) noexcept
+                    : head(std::move(other.head))
+                    , tail(std::move(other.tail))
+                    , end(std::move(other.end))
+            {
+            };
+
             ~ForwardList()
             {
                 delete head;
@@ -39,7 +56,7 @@ class HwList
             {
                 auto node = new typename mem_catche::Node();
                 node->value = std::forward<U>(item);
-                node->next = end;
+                node->next = ForwardList<U>::end;
                 if(tail)
                 {
                     tail->next = node;
