@@ -1,10 +1,57 @@
 #include <memory>
 #include <iostream>
-#include <vector>
 
 template<class T, class Alloc = std::allocator<T> >
 class HwList
 {
+        template<class U>
+        struct ForwardList
+        {
+            struct Node
+            {
+                U value = nullptr;
+                Node* next = nullptr;
+
+                ~Node()
+                {
+                    if(next)
+                    {
+                        delete next;
+                    }
+                }
+
+                bool operator==(const Node& other)
+                {
+                    return value == other.value
+                           && next == other.next;
+                }
+            };
+
+            Node* head = nullptr;
+            Node* tail = nullptr;
+            Node* end = new Node{};
+            ~ForwardList()
+            {
+                delete head;
+            }
+
+            void EmplaceBack(U&& item)
+            {
+                auto node = new typename mem_catche::Node();
+                node->value = std::forward<U>(item);
+                node->next = end;
+                if(tail)
+                {
+                    tail->next = node;
+                }
+                tail = node;
+                if (!head)
+                {
+                    head = tail;
+                }
+            }
+        };
+
     public:
         using value_type = T;
         using allocator_type  = Alloc;
@@ -13,7 +60,7 @@ class HwList
         using size_type  = typename allocator_traits::size_type;
         using reference = value_type&;
         using const_reference = value_type const&;
-        using mem_catche = std::vector<pointer>;
+        using mem_catche = ForwardList<pointer>;
 
         struct Iterator: public std::iterator<std::input_iterator_tag   // iterator_category
                 , value_type               // value_type
@@ -22,19 +69,20 @@ class HwList
                 , reference                       // reference
         >
         {
-            const mem_catche& _refList;
-            size_t _current = 0u;
+            typename mem_catche::Node* _current = nullptr;
 
-            explicit Iterator(const mem_catche& refList, size_t index)
-                    : _refList(refList)
-                    , _current(index)
+            explicit Iterator(typename mem_catche::Node* node)
+                    : _current(node)
             {
                 std::cout << __PRETTY_FUNCTION__ << std::endl;
             }
 
             Iterator& operator++()
             {
-                ++_current;
+                if (_current)
+                {
+                    _current = _current->next;
+                }
                 return *this;
             }
 
@@ -57,11 +105,7 @@ class HwList
 
             reference operator*() const
             {
-                if (_current < _refList.size())
-                {
-                    return *(_refList[_current]);
-                }
-                return *(_refList[std::max(static_cast<int>(_refList.size()) - 1, 0)] + 1);
+                return *(_current->value);
             }
         };
 
@@ -96,32 +140,31 @@ class HwList
         ~HwList()
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            for (auto ptr : _refList)
+            for (auto&& ptr : *this)
             {
-                _alloc.destroy(ptr);
-                _alloc.deallocate(ptr, 1);
+                _alloc.destroy(&ptr);
+                _alloc.deallocate(&ptr, 1);
             }
-            _refList.clear();
         };
 
         template<class ...Args>
         void EmplaceBack(Args&& ... args)
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            const auto item = _alloc.allocate(1);
+            auto item = _alloc.allocate(1);
             _alloc.construct(item, std::forward<Args>(args)...);
-            _refList.emplace_back(item);
-        }
+            _refList.EmplaceBack(std::move(item));
+       }
 
         constexpr Iterator begin() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return Iterator(_refList, 0);
+            return Iterator(_refList.head);
         }
 
         constexpr Iterator end() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return Iterator(_refList, _refList.size());
+            return Iterator(_refList.end);
         }
 };
