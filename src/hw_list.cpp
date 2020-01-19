@@ -4,71 +4,6 @@
 template<class T, class Alloc = std::allocator<T> >
 class HwList
 {
-        template<class U>
-        struct ForwardList
-        {
-            struct Node
-            {
-                U value = nullptr;
-                Node* next = nullptr;
-
-                ~Node()
-                {
-                    if(next)
-                    {
-                        delete next;
-                    }
-                }
-
-                bool operator==(const Node& other)
-                {
-                    return value == other.value
-                           && next == other.next;
-                }
-            };
-
-            Node* head = nullptr;
-            Node* tail = nullptr;
-            Node* end = new Node{};
-
-            ForwardList() = default;
-
-            constexpr ForwardList(const ForwardList<U>& other) noexcept
-                    : head(other.head)
-                    , tail(other.tail)
-                    , end(other.end)
-            {
-            };
-
-            constexpr ForwardList(ForwardList<U>&& other) noexcept
-                    : head(std::move(other.head))
-                    , tail(std::move(other.tail))
-                    , end(std::move(other.end))
-            {
-            };
-
-            ~ForwardList()
-            {
-                delete head;
-            }
-
-            void EmplaceBack(U&& item)
-            {
-                auto node = new typename mem_catche::Node();
-                node->value = std::forward<U>(item);
-                node->next = ForwardList<U>::end;
-                if(tail)
-                {
-                    tail->next = node;
-                }
-                tail = node;
-                if (!head)
-                {
-                    head = tail;
-                }
-            }
-        };
-
     public:
         using value_type = T;
         using allocator_type  = Alloc;
@@ -77,8 +12,34 @@ class HwList
         using size_type  = typename allocator_traits::size_type;
         using reference = value_type&;
         using const_reference = value_type const&;
-        using mem_catche = ForwardList<pointer>;
 
+    private:
+        struct Node
+        {
+            pointer value = nullptr;
+            Node* next = nullptr;
+
+            ~Node()
+            {
+                if(next)
+                {
+                    delete next;
+                }
+            }
+
+            bool operator==(const Node& other)
+            {
+                return value == other.value
+                       && next == other.next;
+            }
+        };
+        Node* head = nullptr;
+        Node* tail = nullptr;
+        Node* _end = new Node{};
+
+        allocator_type _alloc;
+
+    public:
         struct Iterator: public std::iterator<std::input_iterator_tag   // iterator_category
                 , value_type               // value_type
                 , size_type                // difference_type
@@ -86,9 +47,9 @@ class HwList
                 , reference                       // reference
         >
         {
-            typename mem_catche::Node* _current = nullptr;
+            Node* _current = nullptr;
 
-            explicit Iterator(typename mem_catche::Node* node)
+            explicit Iterator(Node* node)
                     : _current(node)
             {
                 std::cout << __PRETTY_FUNCTION__ << std::endl;
@@ -126,33 +87,23 @@ class HwList
             }
         };
 
-    private:
-        allocator_type _alloc;
-        mem_catche _refList;
-
-    public:
-        HwList()
-        {
-            //
-        };
+        HwList() = default;
 
         constexpr HwList(const HwList<T, Alloc>& other) noexcept
                 : _alloc(other._alloc)
-                , _refList(other._refList)
+                , head(other.head)
+                , tail(other.tail)
+                , _end(other.end)
         {
         };
 
         constexpr HwList(HwList<T, Alloc>&& other) noexcept
                 : _alloc(std::move(other._alloc))
-                , _refList(std::move(other._refList))
+                , head(std::move(other.head))
+                , tail(std::move(other.tail))
+                , _end(std::move(other.end))
         {
         };
-
-        template<class U, class AllocU>
-        constexpr HwList(const HwList<U, AllocU>& other) = delete;
-
-        template<class U, class AllocU>
-        constexpr HwList(HwList<T, Alloc>&& other) = delete;
 
         ~HwList()
         {
@@ -162,7 +113,15 @@ class HwList
                 _alloc.destroy(&ptr);
                 _alloc.deallocate(&ptr, 1);
             }
-        };
+
+            delete head;
+        }
+
+        template<class U, class AllocU>
+        constexpr HwList(const HwList<U, AllocU>& other) = delete;
+
+        template<class U, class AllocU>
+        constexpr HwList(HwList<T, Alloc>&& other) = delete;
 
         template<class ...Args>
         void EmplaceBack(Args&& ... args)
@@ -170,18 +129,30 @@ class HwList
             std::cout << __PRETTY_FUNCTION__ << std::endl;
             auto item = _alloc.allocate(1);
             _alloc.construct(item, std::forward<Args>(args)...);
-            _refList.EmplaceBack(std::move(item));
-       }
+
+            auto node = new Node();
+            node->value = std::move(item);
+            node->next = _end;
+            if(tail)
+            {
+                tail->next = node;
+            }
+            tail = node;
+            if (!head)
+            {
+                head = tail;
+            }
+        }
 
         constexpr Iterator begin() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return Iterator(_refList.head);
+            return Iterator(head);
         }
 
         constexpr Iterator end() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return Iterator(_refList.end);
+            return Iterator(_end);
         }
 };
