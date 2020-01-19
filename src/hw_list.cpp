@@ -33,8 +33,8 @@ class HwList
                        && next == other.next;
             }
         };
-        Node* head = nullptr;
-        Node* tail = nullptr;
+        Node* _head = nullptr;
+        Node* _tail = nullptr;
         Node* _end = new Node{};
 
         allocator_type _alloc;
@@ -91,16 +91,16 @@ class HwList
 
         constexpr HwList(const HwList<T, Alloc>& other) noexcept
                 : _alloc(other._alloc)
-                , head(other.head)
-                , tail(other.tail)
+                , _head(other._head)
+                , _tail(other._tail)
                 , _end(other.end)
         {
         };
 
         constexpr HwList(HwList<T, Alloc>&& other) noexcept
                 : _alloc(std::move(other._alloc))
-                , head(std::move(other.head))
-                , tail(std::move(other.tail))
+                , _head(std::move(other._head))
+                , _tail(std::move(other._tail))
                 , _end(std::move(other.end))
         {
         };
@@ -114,7 +114,7 @@ class HwList
                 _alloc.deallocate(&ptr, 1);
             }
 
-            delete head;
+            delete _head;
         }
 
         template<class U, class AllocU>
@@ -133,21 +133,21 @@ class HwList
             auto node = new Node();
             node->value = std::move(item);
             node->next = _end;
-            if(tail)
+            if(_tail)
             {
-                tail->next = node;
+                _tail->next = node;
             }
-            tail = node;
-            if (!head)
+            _tail = node;
+            if (!_head)
             {
-                head = tail;
+                _head = _tail;
             }
         }
 
         constexpr Iterator begin() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return Iterator(head);
+            return Iterator(_head);
         }
 
         constexpr Iterator end() noexcept
