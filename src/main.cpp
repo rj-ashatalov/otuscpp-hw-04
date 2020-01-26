@@ -68,7 +68,7 @@ int main(int, char const *[])
         std::cout << "\n-- Custom container with homework container and default allocator -- " << std::endl;
         auto m = HwList<Hard>{};
         for (size_t i = 0; i < 11; ++i) {
-            m.EmplaceBack(Factorial(i), Fibonacci(i));
+            m.EmplaceFront(Factorial(i), Fibonacci(i));
             std::cout << "---" << std::endl;
         }
         for (auto&& item : m) {
@@ -80,7 +80,7 @@ int main(int, char const *[])
         std::cout << "\n-- Custom container with homework allocator and container -- " << std::endl;
         auto m = HwList<Hard, HwAllocator<Hard, 10>>{};
         for (size_t i = 0; i < 11; ++i) {
-            m.EmplaceBack(Factorial(i), Fibonacci(i));
+            m.EmplaceFront(Factorial(i), Fibonacci(i));
             std::cout << "---" << std::endl;
         }
         for (auto&& item : m) {

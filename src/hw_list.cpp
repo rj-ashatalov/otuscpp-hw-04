@@ -1,12 +1,14 @@
 #include <memory>
 #include <iostream>
+#include "no_copyable.h"
 
 template<class T, class Alloc = std::allocator<T> >
 class HwList
 {
+        struct Node;
     public:
         using value_type = T;
-        using allocator_type  = Alloc;
+        using allocator_type  = typename Alloc::template rebind<Node>::other;
         using allocator_traits = std::allocator_traits<allocator_type>;
         using pointer = typename allocator_traits::pointer;
         using size_type  = typename allocator_traits::size_type;
@@ -14,18 +16,21 @@ class HwList
         using const_reference = value_type const&;
 
     private:
-        struct Node
+        struct Node: public NoCopyable
         {
-            pointer value = nullptr;
+            value_type value = nullptr;
             Node* next = nullptr;
 
-            ~Node()
+            template<class ...Args>
+            Node(Args&& ...args)
+                    : value{std::forward<Args>(args)...}
             {
-                if(next)
-                {
-                    delete next;
-                }
             }
+
+            virtual ~Node() override
+            {
+                std::cout << __PRETTY_FUNCTION__ << std::endl;
+            };
 
             bool operator==(const Node& other)
             {
@@ -34,9 +39,6 @@ class HwList
             }
         };
         Node* _head = nullptr;
-        Node* _tail = nullptr;
-        Node* _end = new Node{};
-
         allocator_type _alloc;
 
     public:
@@ -83,7 +85,7 @@ class HwList
 
             reference operator*() const
             {
-                return *(_current->value);
+                return _current->value;
             }
         };
 
@@ -92,29 +94,25 @@ class HwList
         constexpr HwList(const HwList<T, Alloc>& other) noexcept
                 : _alloc(other._alloc)
                 , _head(other._head)
-                , _tail(other._tail)
-                , _end(other.end)
         {
         };
 
         constexpr HwList(HwList<T, Alloc>&& other) noexcept
                 : _alloc(std::move(other._alloc))
                 , _head(std::move(other._head))
-                , _tail(std::move(other._tail))
-                , _end(std::move(other.end))
         {
         };
 
         ~HwList()
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            for (auto&& ptr : *this)
+            auto node = _head;
+            while (node != nullptr)
             {
-                _alloc.destroy(&ptr);
-                _alloc.deallocate(&ptr, 1);
+                _alloc.destroy(node);
+                _alloc.deallocate(node, 1);
+                node = node->next;
             }
-
-            delete _head;
         }
 
         template<class U, class AllocU>
@@ -124,24 +122,17 @@ class HwList
         constexpr HwList(HwList<T, Alloc>&& other) = delete;
 
         template<class ...Args>
-        void EmplaceBack(Args&& ... args)
+        void EmplaceFront(Args&& ... args)
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            auto item = _alloc.allocate(1);
-            _alloc.construct(item, std::forward<Args>(args)...);
+            auto node = _alloc.allocate(1);
+            _alloc.construct(node, std::forward<Args>(args)...);
 
-            auto node = new Node();
-            node->value = std::move(item);
-            node->next = _end;
-            if(_tail)
+            if (_head)
             {
-                _tail->next = node;
+                node->next = _head;
             }
-            _tail = node;
-            if (!_head)
-            {
-                _head = _tail;
-            }
+            _head = node;
         }
 
         constexpr Iterator begin() noexcept
@@ -153,6 +144,6 @@ class HwList
         constexpr Iterator end() noexcept
         {
             std::cout << __PRETTY_FUNCTION__ << std::endl;
-            return Iterator(_end);
+            return Iterator(nullptr);
         }
 };

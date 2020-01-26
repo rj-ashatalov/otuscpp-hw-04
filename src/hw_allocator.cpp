@@ -3,16 +3,7 @@
 #include <iostream>
 #include <limits>
 #include <vector>
-
-struct NoCopyable
-{
-    NoCopyable() = default;
-    NoCopyable(const NoCopyable& other) = delete;
-    virtual ~NoCopyable()
-    {
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-    };
-};
+#include "no_copyable.h"
 
 struct Hard : public NoCopyable
 {
